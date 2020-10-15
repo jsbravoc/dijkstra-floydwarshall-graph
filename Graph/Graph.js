@@ -36,7 +36,7 @@ class TableLog {
 }
 
 /** Class representing a Weighted (Un)directed Graph */
-class Graph {
+module.exports = class Graph {
   /**
    * Get the logging levels.
    * @return {Object} The logging levels.
@@ -127,10 +127,26 @@ class Graph {
 
   /**
    * Set table log with iterations of algorithm ( @see TableLog ).
-   * @param {Object} - tableLog, made of TableLog objects.
+   * @param {Object} tableLog - tableLog, made of TableLog objects.
    */
   set tableLog(tableLog) {
     this._tableLog = tableLog;
+  }
+
+  /**
+   * Get optional parameter constantNodesCost.
+   * @return {Object} table log.
+   */
+  get constantNodesCost() {
+    return this._constantNodesCost;
+  }
+
+  /**
+   * Set optional parameter constantNodesCost.
+   * @param {Number} constantNodesCost - Constant cost of passing through any node.
+   */
+  set constantNodesCost(constantNodesCost) {
+    this._constantNodesCost = constantNodesCost;
   }
 
   /**
@@ -153,12 +169,14 @@ class Graph {
    * @param {Number} [loggingLevel = 0] - The level of the logger used. By default, the logger level will be 0 (minimal logs, mostly errors).
    * @param {boolean} [ignoreErrors = true] - If true, errors will be thrown at execution in case of failure.
    * @param {boolean} [autoCreateNodes = false] - If true, nodes will be created when creating routes for them in case they don't exist.
+   * @param {Number} [constantNodeCost = 0] - Constant "toll" cost of the nodes, must be greater than zero.
    */
   constructor(
     name = null,
     loggingLevel = 0,
     ignoreErrors = true,
-    autoCreateNodes = false
+    autoCreateNodes = false,
+    constantNodeCost = 0
   ) {
     const now = new Date();
     const date =
@@ -171,6 +189,7 @@ class Graph {
       this.name = `Graph [${date} ${time}]`;
     }
     this.graph = {};
+    this.costsNodes = {};
     this.loggingLevels = {
       NONE: 0,
       MIN: 1,
@@ -180,6 +199,12 @@ class Graph {
     if (typeof ignoreErrors === "boolean") this.ignoreErrors = ignoreErrors;
     if (typeof autoCreateNodes === "boolean")
       this.autoCreateNodes = autoCreateNodes;
+    if (typeof constantNodeCost === "number" && constantNodeCost >= 0) {
+      this.constantNodeCost = constantNodeCost;
+    }
+    else { 
+      this.constantNodeCost = 0;
+    }
     switch (loggingLevel) {
       case this.loggingLevels.MIN:
         this.loggingLevel = this.loggingLevels.MIN;
@@ -225,20 +250,45 @@ class Graph {
 
   /**
    * Adds a node to the graph.
-   * @param {String} node - The name of the node.
+   * @param {Object} node - The name of the node (String) or object {name, cost}
    * @throws {Error} If isError is true and ignoreErrors is false, an error will be thrown if node already exists.
    */
   addNode = (node, ...args) => {
-    if (this.graph.hasOwnProperty(node)) {
+    if (
+      node == null ||
+      (typeof node === "object" && node !== null && node.name == null)
+    ) {
+      this.logProcess(
+        this.loggingLevels.MIN,
+        `Node name is required (node.name)`,
+        true
+      );
+      return this;
+    }
+    if (typeof node === "String" && this.graph.hasOwnProperty(node)) {
       this.logProcess(
         this.loggingLevels.MIN,
         `Node already exists ${node}: ${JSON.stringify(this.graph[node])}`,
         true
       );
       return this;
+    } else if (node.name && this.graph.hasOwnProperty(node.name)) {
+      this.logProcess(
+        this.loggingLevels.MIN,
+        `Node already exists ${node.name}: ${JSON.stringify(
+          this.graph[node.name]
+        )}`,
+        true
+      );
+      return this;
     }
-    this.logProcess(this.loggingLevels.ALL, `Created node ${node}`);
-    this.graph[String(node)] = {};
+    if (node.name == null) {
+      const temp = node;
+      node = { name: temp, cost: this.constantNodeCost };
+    }
+    this.logProcess(this.loggingLevels.ALL, `Created node ${node.name}, with cost ${node.cost}`);
+    this.graph[String(node.name)] = {};
+    this.costsNodes[String(node.name)] = node.cost;
 
     if (args.length > 0) {
       args.forEach((nodeInArgs) => {
@@ -385,99 +435,66 @@ class Graph {
   };
 
   /**
-   * Deletes a route/path between two nodes.
-   * @param {String} startingNode - The starting node of the path. If bidirectional, is a node of the path.
-   * @param {String} endingNode - The ending node of the path. If bidirectional, is the other node of the path.
-   * @param {boolean} [bidirectionalDelete = false] - If true, both directions will be deleted.
-   * @param {boolean} [deleteRoute = true] - If true, the route will be deleted. If false, its weight will be set to Infinity.
+   * Multiply by positive factor the routes.
+   * @param {Number} factor - Positive factor to multiply to all routes weights.
    * @throws {Error} If isError is true and ignoreErrors is false, an error will be thrown in the following cases:
-   *   * If the starting node or the ending node is null.
-   *   * If the starting node or the ending node doesn't exist in graph and this.autoCreateNodes is false.
-   *   * If the starting node and the ending node are the same.
-   *   * If the weight isn't a positive number.
-   *   * If the route already exists and changeCreated is false.
+   *   * If the factor is null, zero or negative
    */
-  deleteRoute = (
-    startingNode,
-    endingNode,
-    bidirectionalDelete = false,
-    deleteRoute = true
-  ) => {
-
-    let errorMessage = "";
-    let countErrors = 0;
-    if (!startingNode) {
-      countErrors++;
-      errorMessage += `Error [${countErrors}]: Starting node can't be null or undefined.\n`;
-    }
-    if (!endingNode) {
-      countErrors++;
-      errorMessage += `Error [${countErrors}]: Ending node can't be null or undefined.\n`;
-    }
-
-    if (countErrors > 0) {
-      this.logProcess(this.loggingLevels.MIN, errorMessage, true);
-      return this;
-    }
-
-    if (!this.graph.hasOwnProperty(startingNode)) {
+  MultiplyByFactorRoutes = (factor) => {
+    if (isNaN(factor) || Number(factor) <= 0) {
       this.logProcess(
         this.loggingLevels.MIN,
-        `Node doesn't exists (${startingNode})}`,
+        "The factor must be a positive number",
         true
       );
       return this;
-    }
-    if (!this.graph[startingNode].hasOwnProperty(endingNode)) {
-      this.logProcess(
-        this.loggingLevels.MIN,
-        `Path to node doesn't exists (${startingNode} -> ${endingNode})`,
-        true
-      );
-      return this;
-    }
-    if (deleteRoute) {
-      this.logProcess(
-        this.loggingLevels.MIN,
-        `Deleted route (${startingNode} -> ${endingNode})`,
-        true
-      );
-      delete this.graph[startingNode][endingNode];
     } else {
-      this.logProcess(
-        this.loggingLevels.MIN,
-        `Changed route (${startingNode} -> ${endingNode}) weight to Infinity`,
-        true
-      );
-      this.graph[startingNode][endingNode] = Infinity;
-    }
-    if (bidirectionalDelete) {
-      if (!this.graph[endingNode].hasOwnProperty(startingNode)) {
-        this.logProcess(
-          this.loggingLevels.MIN,
-          `Path to node doesn't exists (${endingNode} -> ${startingNode})`,
-          true
-        );
-        return this;
-      } else if (deleteRoute) {
-        this.logProcess(
-          this.loggingLevels.MIN,
-          `Deleted route (${startingNode} -> ${endingNode})`,
-          true
-        );
-        delete this.graph[endingNode][startingNode];
-      } else {
-        this.logProcess(
-          this.loggingLevels.MIN,
-          `Changed route (${startingNode} -> ${endingNode}) weight to Infinity`,
-          true
-        );
-        this.graph[endingNode][startingNode] = Infinity;
+      for (const node in this.graph) {
+        if (this.graph.hasOwnProperty(node)) {
+          for (const adjNode in this.graph[node]) {
+            if (this.graph[node].hasOwnProperty(adjNode)) {
+              this.graph[node][adjNode] *= factor;
+              this.logProcess(
+                this.loggingLevels.ALL,
+                `Changed route ${node} - ${adjNode} with new weight: ${this.graph[node][adjNode]}`
+              );
+            }
+          }
+        }
       }
     }
+
     return this;
   };
 
+  /**
+   * Multiply by positive factor the cost of the nodes.
+   * @param {Number} factor - Positive factor to multiply to all nodes weights.
+   * @throws {Error} If isError is true and ignoreErrors is false, an error will be thrown in the following cases:
+   *   * If the factor is null or negative
+   */
+  MultiplyByFactorNodesCosts = (factor) => {
+    if (isNaN(factor) || Number(factor) < 0) {
+      this.logProcess(
+        this.loggingLevels.MIN,
+        "The factor must be a positive number",
+        true
+      );
+      return this;
+    } else {
+      for (const node in this.costsNodes) {
+        if (this.costsNodes.hasOwnProperty[node]) { 
+          this.costsNodes[node] *= factor;
+          this.logProcess(
+            this.loggingLevels.ALL,
+            `Changed node ${node} with new cost: ${this.costsNodes[node]}`
+          );
+        }
+      }
+    }
+
+    return this;
+  };
   /**
    * Finds the closest adjacent node
    * @param {Object} nodes - The adjacent nodes of the node.
@@ -489,7 +506,9 @@ class Graph {
 
     //Explore every adjacent node.
     for (let node in nodes) {
-      let isClosest = closest === null || nodes[node] < nodes[closest];
+      let isClosest =
+        closest === null ||
+        nodes[node] + this.costsNodes[node] < nodes[closest];
       //If the node is the closest and hasn't been visited, then it's the closest node.
       if (isClosest && !visitedNodes.includes(node)) {
         closest = node;
@@ -565,12 +584,12 @@ class Graph {
 
     while (node) {
       iteration++;
-      let distance = nodes[node];
+      let distance = nodes[node] + this.costsNodes[node];
       this.logProcess(
         this.loggingLevels.STEPS,
         `[Iteration ${iteration}]: Visited: ${String(
           node
-        )}, Distance: ${distance}, Connection ${
+        )}, Distance/Cost: ${distance}, Connection ${
           parents[String(node)] === undefined
             ? "None"
             : parents[String(node)] + " -> " + String(node)
@@ -584,7 +603,7 @@ class Graph {
         if (String(child) === String(startNode)) {
           continue;
         } else {
-          let newdistance = distance + children[child];
+          let newdistance = distance + children[child] + this.costsNodes[child];
 
           if (!nodes[child] || newdistance < nodes[child]) {
             updatedNodes += `${String(child)}, `;
@@ -618,10 +637,9 @@ class Graph {
     let shortestPath = [endNode];
     let parent = parents[endNode];
     while (parent) {
-      shortestPath.push(parent);
+      shortestPath.unshift(parent);
       parent = parents[parent];
     }
-    shortestPath.reverse();
 
     let results = {
       distance: nodes[endNode],
@@ -629,7 +647,56 @@ class Graph {
     };
 
     this.tableLog = resultTableLog;
-
+    this.printTableLog();
     return results;
   };
+
+  findMatrixFloydWarshall() {
+    let arrayOfNodes = [];
+    let dist = {};
+    let adjMatrix = {};
+    for (const node in this.graph) {
+      arrayOfNodes.push(node);
+    }
+    arrayOfNodes = arrayOfNodes.sort();
+    arrayOfNodes.forEach((i) => {
+      dist[i] = {};
+      adjMatrix[i] = {};
+    });
+    arrayOfNodes.forEach((i) =>
+      arrayOfNodes.forEach((j) => {
+        adjMatrix[i][j] = i;
+        if (i === j) dist[i][j] = 0;
+        else dist[i][j] = this.graph[i][j] || Infinity;
+      })
+    );
+
+    let iteration = 0;
+
+    console.log(`----------- Iteration ${iteration} -------------`);
+    console.table(dist);
+    console.log("------------------------------------------------");
+    arrayOfNodes.forEach((middleNode) => {
+      arrayOfNodes.forEach((startNode) => {
+        arrayOfNodes.forEach((endNode) => {
+          const throughMiddle =
+            dist[startNode][middleNode] + dist[middleNode][endNode];
+          if (dist[startNode][endNode] > throughMiddle) {
+            dist[startNode][endNode] = throughMiddle;
+            adjMatrix[startNode][endNode] = middleNode;
+          }
+        });
+      });
+      iteration++;
+      console.log(`------------ Iteration ${iteration} --------------`);
+      console.table(dist);
+      console.table(adjMatrix);
+      console.log("------------------------------------------------");
+    });
+    console.table(dist);
+    console.table(adjMatrix);
+    return dist;
+  }
 }
+
+
