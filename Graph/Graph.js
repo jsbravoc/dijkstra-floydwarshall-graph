@@ -1,37 +1,15 @@
+
 /**
- * @description Calculates Dijkstra Algorithm for directed or undirected weighted graphs.
+ * @description Calculates Dijkstra & Floyd Warshall Algorithm for directed or undirected weighted graphs.
  * @author Juan Sebastián Bravo <js.bravo@uniandes.edu.co>
  */
 
-/** Class representing a log of the Dijkstra Algorithm (IIND3221 Format) */
-class TableLog {
-  /**
-   * Create a log for an iteration.
-   * @param {String} visitedNodes - The node marked as visited in the iteration.
-   * @param {Number} distance - The distance (or weight) to get to the node from the starting node.
-   * @param {String} connection - String representing the connection made to get to that node ({A} -> {B} format).
-   * @param {String} updatedNodes - String representing the updated nodes (recursively explored) separated by commas.
-   * @param {String} updatedDistanceNodes - String representing the updated distances of the nodes (recursively explored) separated by commas.
-   */
-  constructor(
-    visitedNodes,
-    distance,
-    connection,
-    updatedNodes,
-    updatedDistanceNodes
-  ) {
-    this["Visited Nodes"] = visitedNodes;
-    this.Distance = distance;
-    this.Connection = connection;
-    this["Updated Nodes"] = updatedNodes;
-    this["Distance Updated Nodes"] = updatedDistanceNodes;
-  }
-
-  /**
-   * Prints the current log in console using console.table()
-   */
-  print() {
-    console.table(this);
+let TableLog = null;
+if (typeof window === "undefined") {
+  TableLog = require("./TableLog.js");
+} else {
+  if (!TableLog) {
+    throw new Error("TableLog class isn't defined yet");
   }
 }
 
@@ -111,7 +89,7 @@ module.exports = class Graph {
 
   /**
    * Set optional parameter autoCreateNodes. If true, nodes will be created if they don't exist whilst creating a route including them.
-   * @param {boolean} ignoreErrors - If nodes will be autocreated.
+   * @param {boolean} autoCreateNodes - If nodes will be autocreated.
    */
   set autoCreateNodes(autoCreateNodes) {
     this._autoCreateNodes = autoCreateNodes;
@@ -147,6 +125,12 @@ module.exports = class Graph {
    */
   set constantNodesCost(constantNodesCost) {
     this._constantNodesCost = constantNodesCost;
+    for (const node in this.costsNodes) {
+      if (this.costsNodes.hasOwnProperty(node)) {
+        this.costsNodes[node]= constantNodesCost;
+        
+      }
+    }
   }
 
   /**
@@ -247,15 +231,22 @@ module.exports = class Graph {
         ":" +
         String(now.getSeconds()).padStart(2, "0");
 
-      if (typeof message === "Object" && message != null) {
+      if (typeof message === "object" && message != null) {
         console.log(
-          `-----------------[START: ${(changeDate != null ? changeDate : date + " " +time)}] ---------------------`
+          `-----------------[START: ${
+            changeDate != null ? changeDate : date + " " + time
+          }] ---------------------`
         );
-        console.table(`${message}`);
+        console.table(message);
         console.log(
-          `-----------------[END: ${(changeDate != null ? changeDate : date + " " +time)}] ---------------------`
+          `-----------------[END: ${
+            changeDate != null ? changeDate : date + " " + time
+          }] ---------------------`
         );
-      } else console.log(`[${(changeDate != null ? changeDate : date + " " +time)}]: ${message}`);
+      } else
+        console.log(
+          `[${changeDate != null ? changeDate : date + " " + time}]: ${message}`
+        );
     }
     if (isError && !this.ignoreErrors) {
       throw new Error(message);
@@ -656,6 +647,7 @@ module.exports = class Graph {
     nodes[endNode] = Infinity;
     nodes = Object.assign(nodes, this.graph[startNode]);
 
+
     let parents = { endNode: null };
 
     //Assign the parent of each child node of the startNode.
@@ -672,12 +664,12 @@ module.exports = class Graph {
     for (const key in this.graph[startNode]) {
       if (this.graph[startNode].hasOwnProperty(key)) {
         updatedNodes += `${key}, `;
-        updatedDistances += `${this.graph[startNode][key]}, `;
+        updatedDistances += `${this.graph[startNode][key] + this.costsNodes[key]}, `;
       }
     }
     resultTableLog[0] = new TableLog(
       startNode,
-      0,
+      this.costsNodes[startNode],
       "-",
       updatedNodes.slice(0, -2),
       updatedDistances.slice(0, -2)
@@ -685,7 +677,13 @@ module.exports = class Graph {
 
     while (node) {
       iteration++;
-      let distance = nodes[node] + this.costsNodes[node];
+      
+      let distance = nodes[node];
+      
+      distance += this.costsNodes[parents[node]];
+      
+      if (distance == 185000)
+        console.log("DEBUG");
       this.logProcess(
         this.loggingLevels.STEPS,
         `[Iteration ${iteration}]: Visited: ${String(
@@ -714,6 +712,7 @@ module.exports = class Graph {
           }
         }
       }
+
       if (updatedNodes != "") {
         this.logProcess(
           this.loggingLevels.STEPS,
@@ -725,7 +724,9 @@ module.exports = class Graph {
       }
       resultTableLog[iteration] = new TableLog(
         String(node),
-        distance,
+        parents[node] === startNode
+          ? nodes[node] + this.costsNodes[startNode]
+          : nodes[node],
         `${parents[String(node)]} -> ${String(node)}`,
         updatedNodes.slice(0, -2),
         updatedDistances.slice(0, -2)
@@ -768,25 +769,35 @@ module.exports = class Graph {
       arrayOfNodes.forEach((j) => {
         precedenceMatrix[i][j] = i;
         if (i === j) dist[i][j] = 0;
-        else dist[i][j] = this.graph[i][j] || Infinity;
+        else dist[i][j] =
+          this.graph[i][j] ||
+          Infinity;
       })
     );
 
     let iteration = 0;
 
-    this.logProcess(this.loggingLevels.STEPS, dist, false, `Iteration ${iteration}`)
+    this.logProcess(
+      this.loggingLevels.STEPS,
+      dist,
+      false,
+      `Iteration ${iteration}`
+    );
 
     arrayOfNodes.forEach((middleNode) => {
       arrayOfNodes.forEach((startNode) => {
         arrayOfNodes.forEach((endNode) => {
           const throughMiddle =
-            dist[startNode][middleNode] + dist[middleNode][endNode];
+            dist[startNode][middleNode] +
+            dist[middleNode][endNode];
           if (dist[startNode][endNode] > throughMiddle) {
             dist[startNode][endNode] = throughMiddle;
             precedenceMatrix[startNode][endNode] = middleNode;
           }
         });
       });
+    
+        
       iteration++;
       this.logProcess(
         this.loggingLevels.STEPS,
