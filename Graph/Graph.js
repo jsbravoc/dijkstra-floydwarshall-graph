@@ -165,26 +165,28 @@ module.exports = class Graph {
 
   /**
    * Create a Weighted (Un)directed Graph.
-   * @param {String} [name] - The name of the graph. By default, its name will be its instantiation date-time.
-   * @param {Number} [loggingLevel = 0] - The level of the logger used. By default, the logger level will be 0 (minimal logs, mostly errors).
-   * @param {boolean} [ignoreErrors = true] - If true, errors will be thrown at execution in case of failure.
-   * @param {boolean} [autoCreateNodes = false] - If true, nodes will be created when creating routes for them in case they don't exist.
-   * @param {Number} [constantNodeCost = 0] - Constant "toll" cost of the nodes, must be greater than zero.
+   * @param {String} [options.name] - The name of the graph. By default, its name will be its instantiation date-time.
+   * @param {Number} [options.loggingLevel = 0] - The level of the logger used. By default, the logger level will be 0 (minimal logs, mostly errors).
+   * @param {boolean} [options.ignoreErrors = true] - If true, errors will be thrown at execution in case of failure.
+   * @param {boolean} [options.autoCreateNodes = false] - If true, nodes will be created when creating routes for them in case they don't exist.
+   * @param {Number} [options.constantNodesCost = 0] - Constant "toll" cost of the nodes, must be greater than zero.
    */
   constructor(
-    name = null,
-    loggingLevel = 0,
-    ignoreErrors = true,
-    autoCreateNodes = false,
-    constantNodeCost = 0
+    options = {
+      name: null,
+      loggingLevel: 0,
+      ignoreErrors: true,
+      autoCreateNodes: false,
+      constantNodesCost: 0,
+    }
   ) {
     const now = new Date();
     const date =
       now.getFullYear() + "-" + (now.getMonth() + 1) + "-" + now.getDate();
     const time =
       now.getHours() + ":" + now.getMinutes() + ":" + now.getSeconds();
-    if (name !== null) {
-      this.name = name;
+    if (options.name !== null) {
+      this.name = options.name;
     } else {
       this.name = `Graph [${date} ${time}]`;
     }
@@ -196,16 +198,19 @@ module.exports = class Graph {
       STEPS: 2,
       ALL: 3,
     };
-    if (typeof ignoreErrors === "boolean") this.ignoreErrors = ignoreErrors;
-    if (typeof autoCreateNodes === "boolean")
-      this.autoCreateNodes = autoCreateNodes;
-    if (typeof constantNodeCost === "number" && constantNodeCost >= 0) {
-      this.constantNodeCost = constantNodeCost;
+    if (typeof options.ignoreErrors === "boolean")
+      this.ignoreErrors = options.ignoreErrors;
+    if (typeof options.autoCreateNodes === "boolean")
+      this.autoCreateNodes = options.autoCreateNodes;
+    if (
+      typeof options.constantNodesCost === "number" &&
+      options.constantNodesCost >= 0
+    ) {
+      this.constantNodesCost = options.constantNodesCost;
+    } else {
+      this.constantNodesCost = 0;
     }
-    else { 
-      this.constantNodeCost = 0;
-    }
-    switch (loggingLevel) {
+    switch (options.loggingLevel) {
       case this.loggingLevels.MIN:
         this.loggingLevel = this.loggingLevels.MIN;
         break;
@@ -225,11 +230,12 @@ module.exports = class Graph {
   /**
    * Print a log in console based on the logging level.
    * @param {Number} level - The level of the log, compared to this.loggingLevels.
-   * @param {String} message - The message of the log.
+   * @param {Object} message - The message of the log (String or Object).
    * @param {boolean} [isError = false] - If true and ignoreErrors is false, an error will be thrown.
+   * @param {String} [changeDate = null] - String to change logging format.
    * @throws {Error} If isError is true and ignoreErrors is false, an error will be thrown.
    */
-  logProcess = (level, message, isError = false) => {
+  logProcess = (level, message, isError = false, changeDate = null) => {
     if (level > this.loggingLevels.NONE && level <= this.loggingLevel) {
       const now = new Date();
       const date =
@@ -241,7 +247,15 @@ module.exports = class Graph {
         ":" +
         String(now.getSeconds()).padStart(2, "0");
 
-      console.log(`[${date} ${time}]: ${message}`);
+      if (typeof message === "Object" && message != null) {
+        console.log(
+          `-----------------[START: ${(changeDate != null ? changeDate : date + " " +time)}] ---------------------`
+        );
+        console.table(`${message}`);
+        console.log(
+          `-----------------[END: ${(changeDate != null ? changeDate : date + " " +time)}] ---------------------`
+        );
+      } else console.log(`[${(changeDate != null ? changeDate : date + " " +time)}]: ${message}`);
     }
     if (isError && !this.ignoreErrors) {
       throw new Error(message);
@@ -284,9 +298,12 @@ module.exports = class Graph {
     }
     if (node.name == null) {
       const temp = node;
-      node = { name: temp, cost: this.constantNodeCost };
+      node = { name: temp, cost: this.constantNodesCost };
     }
-    this.logProcess(this.loggingLevels.ALL, `Created node ${node.name}, with cost ${node.cost}`);
+    this.logProcess(
+      this.loggingLevels.ALL,
+      `Created node ${node.name}, with cost ${node.cost}`
+    );
     this.graph[String(node.name)] = {};
     this.costsNodes[String(node.name)] = node.cost;
 
@@ -435,6 +452,87 @@ module.exports = class Graph {
   };
 
   /**
+   *  Deletes a route from the graph.
+   * @param {String} startingNode - The starting node of the path. If bidirectional, is a node of the path.
+   * @param {String} endingNode - The ending node of the path. If bidirectional, is the other node of the path.
+   * @param {boolean} [bidirectionalDelete = false] - If true, deletes route from start to end and from end to start nodes.
+   * @param {boolean} [deleteFromGraph = true] - If true, the route is deleted completely. Otherwise, its weight becomes Infinity.
+   */
+  deleteRoute = (
+    startingNode,
+    endingNode,
+    bidirectionalDelete = false,
+    deleteFromGraph = true
+  ) => {
+    let errorMessage = "";
+    let countErrors = 0;
+    if (!startingNode) {
+      countErrors++;
+      errorMessage += `Error [${countErrors}]: Starting node can't be null or undefined.\n`;
+    }
+    if (!endingNode) {
+      countErrors++;
+      errorMessage += `Error [${countErrors}]: Ending node can't be null or undefined.\n`;
+    }
+    if (countErrors > 0) {
+      this.logProcess(this.loggingLevels.MIN, errorMessage, true);
+      return this;
+    }
+
+    if (!this.graph.hasOwnProperty(startingNode)) {
+      this.logProcess(
+        this.loggingLevels.MIN,
+        `Starting node ${startingNode} doesn't exist in graph.`,
+        true
+      );
+      return this;
+    }
+
+    if (!this.graph.hasOwnProperty(endingNode)) {
+      this.logProcess(
+        this.loggingLevels.MIN,
+        `Ending node ${endingNode} doesn't exist in graph.`,
+        true
+      );
+      return this;
+    }
+
+    if (this.graph[startingNode][endingNode] == undefined) {
+      this.logProcess(
+        this.loggingLevels.MIN,
+        `Path from ${startingNode} to ${endingNode} doesn't exist.`,
+        true
+      );
+      return this;
+    }
+
+    if (deleteFromGraph) {
+      this.logProcess(
+        this.loggingLevels.ALL,
+        `Deleted route ${startingNode} - ${endingNode} with previous weight: ${this.graph[startingNode][endingNode]}.`,
+        true
+      );
+      delete this.graph[startingNode][endingNode];
+      if (bidirectionalDelete) {
+        return this.deleteRoute(
+          endingNode,
+          startingNode,
+          false,
+          deleteFromGraph
+        );
+      }
+    } else {
+      return this.addRoute(
+        startingNode,
+        endingNode,
+        Infinity,
+        bidirectionalDelete,
+        true
+      );
+    }
+  };
+
+  /**
    * Multiply by positive factor the routes.
    * @param {Number} factor - Positive factor to multiply to all routes weights.
    * @throws {Error} If isError is true and ignoreErrors is false, an error will be thrown in the following cases:
@@ -483,7 +581,7 @@ module.exports = class Graph {
       return this;
     } else {
       for (const node in this.costsNodes) {
-        if (this.costsNodes.hasOwnProperty[node]) { 
+        if (this.costsNodes.hasOwnProperty[node]) {
           this.costsNodes[node] *= factor;
           this.logProcess(
             this.loggingLevels.ALL,
@@ -540,6 +638,9 @@ module.exports = class Graph {
       );
       return this;
     }
+
+    startNode = String(startNode);
+    endNode = String(endNode);
 
     if (Object.keys(this.graph[startNode]).length == 0) {
       this.logProcess(
@@ -647,25 +748,25 @@ module.exports = class Graph {
     };
 
     this.tableLog = resultTableLog;
-    this.printTableLog();
+    this.logProcess(this.loggingLevels.STEPS, resultTableLog);
     return results;
   };
 
   findMatrixFloydWarshall() {
     let arrayOfNodes = [];
     let dist = {};
-    let adjMatrix = {};
+    let precedenceMatrix = {};
     for (const node in this.graph) {
       arrayOfNodes.push(node);
     }
     arrayOfNodes = arrayOfNodes.sort();
     arrayOfNodes.forEach((i) => {
       dist[i] = {};
-      adjMatrix[i] = {};
+      precedenceMatrix[i] = {};
     });
     arrayOfNodes.forEach((i) =>
       arrayOfNodes.forEach((j) => {
-        adjMatrix[i][j] = i;
+        precedenceMatrix[i][j] = i;
         if (i === j) dist[i][j] = 0;
         else dist[i][j] = this.graph[i][j] || Infinity;
       })
@@ -673,9 +774,8 @@ module.exports = class Graph {
 
     let iteration = 0;
 
-    console.log(`----------- Iteration ${iteration} -------------`);
-    console.table(dist);
-    console.log("------------------------------------------------");
+    this.logProcess(this.loggingLevels.STEPS, dist, false, `Iteration ${iteration}`)
+
     arrayOfNodes.forEach((middleNode) => {
       arrayOfNodes.forEach((startNode) => {
         arrayOfNodes.forEach((endNode) => {
@@ -683,20 +783,25 @@ module.exports = class Graph {
             dist[startNode][middleNode] + dist[middleNode][endNode];
           if (dist[startNode][endNode] > throughMiddle) {
             dist[startNode][endNode] = throughMiddle;
-            adjMatrix[startNode][endNode] = middleNode;
+            precedenceMatrix[startNode][endNode] = middleNode;
           }
         });
       });
       iteration++;
-      console.log(`------------ Iteration ${iteration} --------------`);
-      console.table(dist);
-      console.table(adjMatrix);
-      console.log("------------------------------------------------");
+      this.logProcess(
+        this.loggingLevels.STEPS,
+        dist,
+        false,
+        `Iteration ${iteration}`
+      );
+      this.logProcess(
+        this.loggingLevels.STEPS,
+        precedenceMatrix,
+        false,
+        `Iteration ${iteration}`
+      );
     });
-    console.table(dist);
-    console.table(adjMatrix);
-    return dist;
+    this.tableLog = dist;
+    return [dist, precedenceMatrix];
   }
-}
-
-
+};
