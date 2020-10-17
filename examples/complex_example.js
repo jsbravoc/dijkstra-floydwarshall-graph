@@ -10,7 +10,7 @@ const LOG_EVERYTHING = 3;
 const LOG_MIN = 1;
 
 const graph = new Graph({
-  loggingLevel: LOG_EVERYTHING,
+  loggingLevel: 0,
   autoCreateNodes: true,
   ignoreErrors: true,
 });
@@ -81,7 +81,6 @@ const literal_c = graph.findPathDijkstra("0", "16");
 console.log("literal_c", literal_c);
 //d)
 
-
 graph.deleteRoute("0", "5", true);
 graph.deleteRoute("0", "9", true);
 graph.MultiplyByFactorRoutes(10000);
@@ -90,6 +89,7 @@ graph.constantNodesCost = 55000;
 let literal_d = graph.findPathDijkstra("0", "3");
 
 console.log("literal_d", literal_d);
+console.table(graph.findMatrixFloydWarshall()[0]);
 
 graph.constantNodesCost = 0;
 graph.MultiplyByFactorRoutes(1 / 10000);

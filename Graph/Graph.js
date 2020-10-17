@@ -1,4 +1,3 @@
-
 /**
  * @description Calculates Dijkstra & Floyd Warshall Algorithm for directed or undirected weighted graphs.
  * @author Juan Sebastián Bravo <js.bravo@uniandes.edu.co>
@@ -127,8 +126,7 @@ module.exports = class Graph {
     this._constantNodesCost = constantNodesCost;
     for (const node in this.costsNodes) {
       if (this.costsNodes.hasOwnProperty(node)) {
-        this.costsNodes[node]= constantNodesCost;
-        
+        this.costsNodes[node] = constantNodesCost;
       }
     }
   }
@@ -647,12 +645,12 @@ module.exports = class Graph {
     nodes[endNode] = Infinity;
     nodes = Object.assign(nodes, this.graph[startNode]);
 
-
     let parents = { endNode: null };
 
     //Assign the parent of each child node of the startNode.
     for (let child in this.graph[startNode]) {
       parents[child] = startNode;
+      nodes[child] += this.costsNodes[startNode] + this.costsNodes[child];
     }
 
     let visited = [];
@@ -664,7 +662,11 @@ module.exports = class Graph {
     for (const key in this.graph[startNode]) {
       if (this.graph[startNode].hasOwnProperty(key)) {
         updatedNodes += `${key}, `;
-        updatedDistances += `${this.graph[startNode][key] + this.costsNodes[key]}, `;
+        updatedDistances += `${
+          this.costsNodes[startNode] +
+          this.graph[startNode][key] +
+          this.costsNodes[key]
+        }, `;
       }
     }
     resultTableLog[0] = new TableLog(
@@ -677,13 +679,9 @@ module.exports = class Graph {
 
     while (node) {
       iteration++;
-      
+
       let distance = nodes[node];
-      
-      distance += this.costsNodes[parents[node]];
-      
-      if (distance == 185000)
-        console.log("DEBUG");
+
       this.logProcess(
         this.loggingLevels.STEPS,
         `[Iteration ${iteration}]: Visited: ${String(
@@ -724,10 +722,10 @@ module.exports = class Graph {
       }
       resultTableLog[iteration] = new TableLog(
         String(node),
-        parents[node] === startNode
-          ? nodes[node] + this.costsNodes[startNode]
-          : nodes[node],
-        `${parents[String(node)]} -> ${String(node)}`,
+        nodes[node],
+        parents[String(node)] === undefined
+          ? "None"
+          : `${parents[String(node)]} -> ${String(node)}`,
         updatedNodes.slice(0, -2),
         updatedDistances.slice(0, -2)
       );
@@ -769,9 +767,7 @@ module.exports = class Graph {
       arrayOfNodes.forEach((j) => {
         precedenceMatrix[i][j] = i;
         if (i === j) dist[i][j] = 0;
-        else dist[i][j] =
-          this.graph[i][j] ||
-          Infinity;
+        else dist[i][j] = this.graph[i][j] + this.costsNodes[j] || Infinity;
       })
     );
 
@@ -789,15 +785,17 @@ module.exports = class Graph {
         arrayOfNodes.forEach((endNode) => {
           const throughMiddle =
             dist[startNode][middleNode] +
-            dist[middleNode][endNode];
+            dist[middleNode][endNode] +
+            (middleNode != startNode && middleNode != endNode
+              ? 0
+              : this.costsNodes[middleNode]);
           if (dist[startNode][endNode] > throughMiddle) {
             dist[startNode][endNode] = throughMiddle;
             precedenceMatrix[startNode][endNode] = middleNode;
           }
         });
       });
-    
-        
+
       iteration++;
       this.logProcess(
         this.loggingLevels.STEPS,
@@ -811,6 +809,16 @@ module.exports = class Graph {
         false,
         `Iteration ${iteration}`
       );
+    });
+
+    arrayOfNodes.forEach((row) => {
+      if (this.costsNodes[row] > 0) {
+        arrayOfNodes.forEach((col) => {
+          if (dist[row][col] > 0 && dist[row][col] < Infinity) {
+            dist[row][col] += this.costsNodes[row];
+          }
+        });
+      }
     });
     this.tableLog = dist;
     return [dist, precedenceMatrix];

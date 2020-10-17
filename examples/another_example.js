@@ -2,7 +2,7 @@ const Graph = require("../Graph/Graph");
 
 const graph = new Graph({
   autoCreateNodes: true,
-  loggingLevel: 3,
+  loggingLevel: 0,
   constantNodesCost: 100,
 });
 
@@ -21,3 +21,6 @@ graph.findMatrixFloydWarshall(); // output: => [<distance_matrix>, <precedence_m
 
 const dijkstra = graph.findPathDijkstra("A", "D"); // output: => { distance: 2, path: ['A', 'C', 'D']}
 console.log(dijkstra);
+const floyd_warshall = graph.findMatrixFloydWarshall(); // output: => [<distance_matrix>, <precedence_matrix>]
+console.table(floyd_warshall[0]);
+console.table(floyd_warshall[1]);

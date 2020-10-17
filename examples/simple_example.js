@@ -2,9 +2,9 @@ const Graph = require("../Graph/Graph");
 
 const graph = new Graph();
 
-graph.addNode("A")
-graph.addNode("B")
-graph.addNode("C")
+graph.addNode("A");
+graph.addNode("B");
+graph.addNode("C");
 graph.addNode("D");
 
 graph.addRoute("A", "B", 2);
