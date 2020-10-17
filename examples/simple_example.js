@@ -14,6 +14,6 @@ graph.addRoute("C", "D", 1);
 
 const dijkstra = graph.findPathDijkstra("A", "D"); // output: => { distance: 2, path: ['A', 'C', 'D']}
 console.log(dijkstra);
-const floyd_warshall = graph.findMatrixFloydWarshall(); // output: => [<distance_matrix>, <precedence_matrix>]
+const floyd_warshall = graph.findMatricesFloydWarshall(); // output: => [<distance_matrix>, <precedence_matrix>]
 console.table(floyd_warshall[0]);
 console.table(floyd_warshall[1]);

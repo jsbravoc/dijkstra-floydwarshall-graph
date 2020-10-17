@@ -19,7 +19,7 @@ module.exports = class TableLog {
     this.Distance = distance;
     this.Connection = connection;
     this["Updated Nodes"] = updatedNodes;
-    this["Distance Updated Nodes"] = updatedDistanceNodes;
+    this["Updated Cost Nodes"] = updatedDistanceNodes;
   }
 
   /**

@@ -2,11 +2,11 @@ const Graph = require("../Graph/Graph");
 
 const graph = new Graph({
   autoCreateNodes: true,
-  loggingLevel: 0,
+  loggingLevel: 3,
   constantNodesCost: 100,
 });
 
-//Say A is a toll = 500.
+//Say C is has a toll of 500.
 graph.addNode({ name: "C", cost: 500 });
 
 //Since autoCreateNodes is true, A,B,D nodes will be autoCreated with cost = constantNodesCost (100).
@@ -16,11 +16,47 @@ graph.addRoute("B", "C", 2);
 graph.addRoute("C", "D", 1);
 graph.addRoute("B", "D", 200);
 
-graph.findPathDijkstra("A", "D"); // output: => { distance: 502, path: ['A', 'B', 'D']}
-graph.findMatrixFloydWarshall(); // output: => [<distance_matrix>, <precedence_matrix>]
-
-const dijkstra = graph.findPathDijkstra("A", "D"); // output: => { distance: 2, path: ['A', 'C', 'D']}
+let dijkstra = graph.findPathDijkstra("A", "D"); // output: => { cost: 2, path: ['A', 'C', 'D']}
 console.log(dijkstra);
-const floyd_warshall = graph.findMatrixFloydWarshall(); // output: => [<distance_matrix>, <precedence_matrix>]
+let floyd_warshall = graph.findMatricesFloydWarshall(); // output: => [<distance_matrix>, <precedence_matrix>]
 console.table(floyd_warshall[0]);
 console.table(floyd_warshall[1]);
+
+graph.editNode("C", null, 1);
+
+dijkstra = graph.findPathDijkstra("A", "D");
+console.log(dijkstra); // output: => { cost: 203, path: ['A', 'C', 'D']}
+
+graph.editNode("C", "F", 100);
+
+dijkstra = graph.findPathDijkstra("A", "D");
+console.log(dijkstra); // output: => { cost: 302, path: ['A', 'F', 'D']}
+
+graph.editNode("F", "H", null);
+
+dijkstra = graph.findPathDijkstra("A", "D");
+console.log(dijkstra); // output: => { cost: 302, path: ['A', 'H', 'D']}
+
+graph.editRoute("A", "H", 1000);
+
+dijkstra = graph.findPathDijkstra("A", "D");
+console.log(dijkstra); // output: => { cost: 405, path: ['A', 'B', 'H', 'D']}
+
+graph.deleteNode("B");
+dijkstra = graph.findPathDijkstra("A", "D");
+console.log(dijkstra); // output: => { cost: 1301, path: ['A', 'H', 'D']}
+
+graph.addRoute("A", "B", 1);
+graph.addRoute("B", "D", 1);
+dijkstra = graph.findPathDijkstra("A", "D");
+console.log(dijkstra); // output: => { cost: 302, path: ['A', 'B', 'D']}
+
+graph.avoidRoute("A", "B")
+dijkstra = graph.findPathDijkstra("A", "D");
+console.log(dijkstra); // output: => { cost:1301, path: ['A', 'H', 'D']}
+
+
+graph.addRoute("A", "D", 1000);
+graph.avoidNode("H");
+dijkstra = graph.findPathDijkstra("A", "D");
+console.log(dijkstra); // output: => { cost:1200, path: ['A', 'D']}

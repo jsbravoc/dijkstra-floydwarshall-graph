@@ -1,3 +1,6 @@
+
+//This example is the solution to Taller 3 (2020) - Logística (IIND3221) and thus, the reason of creating this library :)
+
 let Graph = null;
 if (typeof window === "undefined") {
   Graph = require("../Graph/Graph.js");
@@ -6,14 +9,21 @@ if (typeof window === "undefined") {
     throw new Error("Graph class isn't defined yet");
   }
 }
+
 const LOG_EVERYTHING = 3;
 const LOG_MIN = 1;
 
 const graph = new Graph({
+  name: "Graph Taller 3",
   loggingLevel: 0,
   autoCreateNodes: true,
   ignoreErrors: true,
+  costFormat: {
+    suffix: true,
+    format: "KM",
+  },
 });
+  ;
 graph
   .addRoute(7, 3, 15)
   .addRoute(3, 1, 14, true)
@@ -48,50 +58,57 @@ graph
   .addRoute(11, 15, 9)
   .addRoute(11, 14, 17, true);
 
-//a)
-const [dist, precedenceMatrix] = graph.findMatrixFloydWarshall();
+//a) Find distance & precedence matrix using Floyd Warshall Algorithm.
+const [dist, precedenceMatrix] = graph.findMatricesFloydWarshall();
 console.log("literal_a:");
 console.table(dist);
-//b)
+console.table(precedenceMatrix);
+
+//b) Find path using precedence matrix for clients 3, 6, 14
 const clients = [3, 6, 14];
 const origin = "0";
-const literal_b = { Distances: {}, Path: {} };
+const literal_b = { Costs: {}, Path: {} };
 clients.forEach((client) => {
-  const end = client;
-  literal_b["Distances"][`Client ${client}`] = dist[origin][client];
-  let predecesor = precedenceMatrix[origin][client];
-  let route = [];
-  while (predecesor !== client) {
-    route.push(String(client));
-    client = precedenceMatrix[predecesor][client];
-  }
-  route.push(String(predecesor));
-  route.push(String(origin));
-  route = route.reverse();
-  literal_b["Path"][`Client ${end}`] = route;
+  const response = graph.findPathFloydWarshall(origin, client);
+  literal_b["Path"][`Client ${client}`] = response.path;
+  literal_b["Costs"][`Client ${client}`] = response.cost;
 });
 console.log("literal_b", literal_b);
 clients.forEach((client) =>
   console.log(`\t Client ${client}: `, graph.findPathDijkstra(origin, client))
 );
 
-//C)
-graph.addRoute(7, 16, 18).addRoute(13, 16, 10, true).addRoute(15, 16, 8);
+//C) New client, new routes, find best path using Dijkstra.
+graph
+  .addRoute(7, 16, 18)
+  .addRoute(13, 16, 10, true)
+  .addRoute(15, 16, 8);
 const literal_c = graph.findPathDijkstra("0", "16");
 console.log("literal_c", literal_c);
-//d)
 
+//d) Delete/avoid routes. Added tolls for every node, changed distance (Km)  to cost per Km ($).
 graph.deleteRoute("0", "5", true);
 graph.deleteRoute("0", "9", true);
-graph.MultiplyByFactorRoutes(10000);
 graph.constantNodesCost = 55000;
+graph.MultiplyByFactorRoutes(10000);
+graph.costFormat = new Intl.NumberFormat("es-CO", {
+  style: "currency",
+  currency: "USD",
+  maximumSignificantDigits: 5,
+});
 
 let literal_d = graph.findPathDijkstra("0", "3");
-
 console.log("literal_d", literal_d);
-console.table(graph.findMatrixFloydWarshall()[0]);
 
+//Same solution using Floyd Warshall Algorithm
+console.table(graph.findMatricesFloydWarshall()[0]);
+
+//Verify that route is different if the conditions didn't change.
 graph.constantNodesCost = 0;
+graph.costFormat = {
+    suffix: true,
+    format: "KM",
+  }
 graph.MultiplyByFactorRoutes(1 / 10000);
 literal_d = graph.findPathDijkstra("0", "3");
 console.log("literal_d", literal_d);
