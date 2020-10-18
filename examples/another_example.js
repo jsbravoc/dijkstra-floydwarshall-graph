@@ -2,8 +2,9 @@ const Graph = require("../Graph/Graph");
 
 const graph = new Graph({
   autoCreateNodes: true,
-  loggingLevel: 3,
+  loggingLevel: 0,
   constantNodesCost: 100,
+  ignoreErrors: false
 });
 
 //Say C is has a toll of 500.
@@ -16,7 +17,7 @@ graph.addRoute("B", "C", 2);
 graph.addRoute("C", "D", 1);
 graph.addRoute("B", "D", 200);
 
-let dijkstra = graph.findPathDijkstra("A", "D"); // output: => { cost: 2, path: ['A', 'C', 'D']}
+let dijkstra = graph.findPathDijkstra("A", "D"); // output: => { cost: 502, path: ['A', 'B', 'D']}
 console.log(dijkstra);
 let floyd_warshall = graph.findMatricesFloydWarshall(); // output: => [<distance_matrix>, <precedence_matrix>]
 console.table(floyd_warshall[0]);
@@ -60,3 +61,5 @@ graph.addRoute("A", "D", 1000);
 graph.avoidNode("H");
 dijkstra = graph.findPathDijkstra("A", "D");
 console.log(dijkstra); // output: => { cost:1200, path: ['A', 'D']}
+
+graph.addNode("A");

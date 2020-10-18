@@ -18,6 +18,7 @@ module.exports = class Graph {
   #tableLog = null;
   #distanceMatrix = null;
   #precedenceMatrix = null;
+  #protectedNodesCost = {};
 
   /**
    * Get the logging levels.
@@ -37,7 +38,7 @@ module.exports = class Graph {
 
   /**
    * Get the name of the Graph.
-   * @return {String} The name of the Graph.
+   * @return {string} The name of the Graph.
    */
   get name() {
     return this._name;
@@ -45,7 +46,7 @@ module.exports = class Graph {
 
   /**
    * Set the name of the Graph.
-   * @param {String} name - The name of the Graph.
+   * @param {string} name - The name of the Graph.
    */
   set name(name) {
     this._name = name;
@@ -152,12 +153,16 @@ module.exports = class Graph {
    * @param {Number} constantNodesCost - Constant cost of passing through any node.
    */
   set constantNodesCost(constantNodesCost) {
-    this._constantNodesCost = constantNodesCost;
     for (const node in this.costsNodes) {
-      if (this.costsNodes.hasOwnProperty(node)) {
+      if (
+        this.costsNodes.hasOwnProperty(node) &&
+        this.costsNodes[node] === this._constantNodesCost &&
+        !this.#protectedNodesCost[node]
+      ) {
         this.costsNodes[node] = constantNodesCost;
       }
     }
+    this._constantNodesCost = constantNodesCost;
   }
 
   /**
@@ -204,7 +209,7 @@ module.exports = class Graph {
 
   /**
    * Create a Weighted (Un)directed Graph.
-   * @param {String} [name] - The name of the graph (used in logs).
+   * @param {string} [name] - The name of the graph (used in logs).
    * @param {Number} [loggingLevel = 0] - The level of the logger used. By default, the logger level will be 0 (minimal logs, mostly errors).
    * @param {boolean} [ignoreErrors = true] - If true, errors will be thrown at execution in case of failure.
    * @param {boolean} [autoCreateNodes = false] - If true, nodes will be created when creating routes for them in case they don't exist.
@@ -285,7 +290,7 @@ module.exports = class Graph {
    * @param {Number} level - The level of the log, compared to this.loggingLevels.
    * @param {Object} message - The message of the log (String or Object).
    * @param {boolean} [isError = false] - If true and ignoreErrors is false, an error will be thrown.
-   * @param {String} [changeDate = null] - String to change logging format.
+   * @param {string} [changeDate = null] - String to change logging format.
    * @throws {Error} If isError is true and ignoreErrors is false, an error will be thrown.
    */
   logProcess = (level, message, isError = false, changeDate = null) => {
@@ -329,7 +334,7 @@ module.exports = class Graph {
 
   /**
    * Adds a node to the graph.
-   * @param {Object} node - The name of the node (String) or object {name, cost}
+   * @param {Object} node - The name of the node (String) or object {name, cost, protectNodeCost}
    * @throws {Error} If isError is true and ignoreErrors is false, an error will be thrown if node already exists.
    */
   addNode = (node, ...args) => {
@@ -343,19 +348,26 @@ module.exports = class Graph {
         true
       );
       return this;
-    }
-    if (typeof node === "String" && this.graph.hasOwnProperty(node)) {
+    } else if (node == "") {
+      this.logProcess(this.loggingLevels.MIN, `Node name is required`, true);
+      return this;
+    } else if (this.graph.hasOwnProperty(String(node))) {
       this.logProcess(
         this.loggingLevels.MIN,
-        `Node already exists ${node}: ${JSON.stringify(this.graph[node])}`,
+        `Node already exists ${node}: ${JSON.stringify(
+          this.graph[String(node)]
+        )}`,
         true
       );
       return this;
-    } else if (node.name && this.graph.hasOwnProperty(node.name)) {
+    } else if (
+      String(node.name) &&
+      this.graph.hasOwnProperty(String(node.name))
+    ) {
       this.logProcess(
         this.loggingLevels.MIN,
         `Node already exists ${node.name}: ${JSON.stringify(
-          this.graph[node.name]
+          this.graph[String(node.name)]
         )}`,
         true
       );
@@ -372,7 +384,11 @@ module.exports = class Graph {
 
     if (node.name == null) {
       const temp = node;
-      node = { name: temp, cost: this.constantNodesCost };
+      node = {
+        name: temp,
+        cost: this.constantNodesCost,
+        protectNodeCost: false,
+      };
     }
     this.logProcess(
       this.loggingLevels.ALL,
@@ -380,6 +396,7 @@ module.exports = class Graph {
     );
     this.graph[String(node.name)] = {};
     this.costsNodes[String(node.name)] = node.cost;
+    this.#protectedNodesCost[String(node.name)] = node.protectNodeCost || false;
 
     if (args.length > 0) {
       args.forEach((nodeInArgs) => {
@@ -397,7 +414,8 @@ module.exports = class Graph {
    * @throws {Error} If isError is true and ignoreErrors is false, an error will be thrown if node doesn't exist.
    */
   editNode = (nodeName, newNodeName = null, newConstantCost = null) => {
-    if (typeof nodeName !== "string" || nodeName === "") {
+    nodeName = String(nodeName);
+    if (nodeName === "") {
       this.logProcess(
         this.loggingLevels.MIN,
         `Node name is a required string`,
@@ -478,10 +496,11 @@ module.exports = class Graph {
 
   /**
    * Deletes a node from the graph.
-   * @param {String} node - The name of the node.
+   * @param {string} node - The name of the node.
    * @throws {Error} If isError is true and ignoreErrors is false, an error will be thrown if node doesn't exists.
    */
   deleteNode = (node, ...args) => {
+    node = String(node);
     if (!this.graph.hasOwnProperty(node)) {
       this.logProcess(
         this.loggingLevels.MIN,
@@ -510,7 +529,7 @@ module.exports = class Graph {
 
   /**
    * Avoids a node from the graph.
-   * @param {String} node - The name of the node.
+   * @param {string} node - The name of the node.
    * @throws {Error} If isError is true and ignoreErrors is false, an error will be thrown if node doesn't exists.
    */
   avoidNode = (node, ...args) => {
@@ -529,8 +548,8 @@ module.exports = class Graph {
 
   /**
    * Adds a route/path between two nodes.
-   * @param {String} startNode - The starting node of the path. If bidirectional, is a node of the path.
-   * @param {String} endNode - The ending node of the path. If bidirectional, is the other node of the path.
+   * @param {string} startNode - The starting node of the path. If bidirectional, is a node of the path.
+   * @param {string} endNode - The ending node of the path. If bidirectional, is the other node of the path.
    * @param {Number} weight - The weight of the path.
    * @param {boolean} [bidirectional = false] - If true, a bidirectional path will be created.
    * @param {boolean} [changeCreated = false] - If true, an already existing route will be changed (its weight).
@@ -641,24 +660,45 @@ module.exports = class Graph {
 
   /**
    * Edits a route/path between two nodes.
-   * @param {String} startNode - The starting node of the path. If bidirectional, is a node of the path.
-   * @param {String} endNode - The ending node of the path. If bidirectional, is the other node of the path.
+   * @param {string} startNode - The starting node of the path. If bidirectional, is a node of the path.
+   * @param {string} endNode - The ending node of the path. If bidirectional, is the other node of the path.
    * @param {Number} weight - The weight of the path.
    * @param {boolean} [bidirectionalEdit = false] - If true, bidirectional path will be created/edited.
+   * @param {boolean} [verifyExistence = false] - If true and route doesn't exist, will log an error.
    * @throws {Error} If isError is true and ignoreErrors is false, an error will be thrown in the following cases:
    *   * If the starting node or the ending node is null.
    *   * If the starting node or the ending node doesn't exist in graph and this.autoCreateNodes is false.
    *   * If the starting node and the ending node are the same.
    *   * If the weight isn't a positive number.
+   *   * If verifyExistence is true and the route doesn't exist
    */
-  editRoute = (startNode, endNode, weight, bidirectionalEdit = false) => {
+  editRoute = (
+    startNode,
+    endNode,
+    weight,
+    bidirectionalEdit = false,
+    verifyExistence = false
+  ) => {
+    if (
+      verifyExistence == true &&
+      (!this.graph[startNode].hasOwnProperty(endNode) ||
+        (bidirectionalEdit == true &&
+          !this.graph[endNode].hasOwnProperty(startNode)))
+    ) {
+      this.logProcess(
+        this.loggingLevels.MIN,
+        `Trying to edit non-existing route ${startNode} -> ${endNode} with parameter verifyExistence = true`,
+        true
+      );
+      return this;
+    }
     return this.addRoute(startNode, endNode, weight, bidirectionalEdit, true);
   };
 
   /**
    *  Deletes a route from the graph.
-   * @param {String} startNode - The starting node of the path. If bidirectional, is a node of the path.
-   * @param {String} endNode - The ending node of the path. If bidirectional, is the other node of the path.
+   * @param {string} startNode - The starting node of the path. If bidirectional, is a node of the path.
+   * @param {string} endNode - The ending node of the path. If bidirectional, is the other node of the path.
    * @param {boolean} [bidirectionalDelete = false] - If true, deletes route from start to end and from end to start nodes.
    * @param {boolean} [deleteFromGraph = true] - If true, the route is deleted completely. Otherwise, its weight becomes Infinity.
    */
@@ -727,8 +767,8 @@ module.exports = class Graph {
 
   /**
    *  Avoid a route from the graph.
-   * @param {String} startNode - The starting node of the path. If bidirectional, is a node of the path.
-   * @param {String} endNode - The ending node of the path. If bidirectional, is the other node of the path.
+   * @param {string} startNode - The starting node of the path. If bidirectional, is a node of the path.
+   * @param {string} endNode - The ending node of the path. If bidirectional, is the other node of the path.
    * @param {boolean} [bidirectionalAvoid = false] - If true, avoids both routhes from start to end and from end to start nodes.
    */
   avoidRoute = (startNode, endNode, bidirectionalAvoid = false) => {
@@ -820,8 +860,8 @@ module.exports = class Graph {
 
   /**
    * Finds the best (min weight) path.
-   * @param {String} startNode - The starting node of the path.
-   * @param {String} endNode - The ending node of the path.
+   * @param {string} startNode - The starting node of the path.
+   * @param {string} endNode - The ending node of the path.
    * @returns {Object} Object with path and calculated weight (distance).
    */
   findPathDijkstra = (startNode, endNode) => {
@@ -1077,6 +1117,25 @@ module.exports = class Graph {
         true
       );
     }
+    if (startNode == null || endNode == null || startNode == "" || endNode == "")
+    {
+      this.logProcess(
+        this.loggingLevels.MIN,
+        "The starting/ending nodes specified doesn't exist in the graph yet.",
+        true
+      );
+      return this;
+    }
+
+    if (Object.keys(this.graph[startNode]).length == 0) {
+      this.logProcess(
+        this.loggingLevels.MIN,
+        "The starting node doesn't have any connections to another node.",
+        true
+      );
+      return this;
+    }
+    
     let predecesor = this.precedenceMatrix[startNode][endNode];
     let route = [];
     while (predecesor !== endNode) {

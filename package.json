@@ -2,9 +2,10 @@
   "name": "dijkstra-floydwarshall-algorithms",
   "version": "1.0.0",
   "description": "Dijkstra & Floyd Warshall implementation for weighted (un)directed graphs.",
-  "main": "Main.js",
+  "main": "./Graph/Graph.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "mocha",
+    "start": "node ./examples/complex_example.js"
   },
   "repository": {
     "type": "git",
@@ -25,5 +26,8 @@
     "url": "https://github.com/jsbravoc/UA-DijkstraFW/issues"
   },
   "homepage": "https://github.com/jsbravoc/UA-DijkstraFW#readme",
-  "devDependencies": {}
+  "devDependencies": {
+    "chai": "^4.2.0",
+    "mocha": "^8.2.0"
+  }
 }
