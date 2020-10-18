@@ -1,5 +1,5 @@
 
-//This example is the solution to Taller 3 (2020) - Logística (IIND3221) and thus, the reason of creating this library :)
+//This example is the solution to a homework and, thus, the reason for creating this library :)
 
 let Graph = null;
 if (typeof window === "undefined") {
@@ -15,7 +15,7 @@ const LOG_MIN = 1;
 
 const graph = new Graph({
   name: "Graph Taller 3",
-  loggingLevel: 0,
+  loggingLevel: LOG_EVERYTHING,
   autoCreateNodes: true,
   ignoreErrors: true,
   costFormat: {

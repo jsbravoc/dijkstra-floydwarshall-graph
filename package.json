@@ -1,5 +1,5 @@
 {
-  "name": "dijkstra-floydwarshall-algorithms",
+  "name": "dijkstra-floydwarshall-graph",
   "version": "1.0.0",
   "description": "Dijkstra & Floyd Warshall implementation for weighted (un)directed graphs.",
   "main": "./Graph/Graph.js",
@@ -9,7 +9,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/jsbravoc/UA-DijkstraFW.git"
+    "url": "git+https://github.com/jsbravoc/dijkstra-floydwarshall-graph.git"
   },
   "keywords": [
     "Dijkstra",
@@ -23,9 +23,9 @@
   "author": "Juan Sebastián Bravo <js.bravo@uniandes.edu.co>",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/jsbravoc/UA-DijkstraFW/issues"
+    "url": "https://github.com/jsbravoc/dijkstra-floydwarshall-graph/issues"
   },
-  "homepage": "https://github.com/jsbravoc/UA-DijkstraFW#readme",
+  "homepage": "https://github.com/jsbravoc/dijkstra-floydwarshall-graph#readme",
   "devDependencies": {
     "chai": "^4.2.0",
     "mocha": "^8.2.0"
