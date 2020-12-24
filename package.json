@@ -1,7 +1,7 @@
 {
   "name": "dijkstra-floydwarshall-graph",
-  "version": "1.0.0",
-  "description": "Dijkstra & Floyd Warshall implementation for weighted (un)directed graphs.",
+  "version": "1.0.1",
+  "description": "Dijkstra & Floyd Warshall implementation for weighted directed and undirected graphs with iteration logging.",
   "main": "./Graph/Graph.js",
   "scripts": {
     "test": "mocha",
@@ -18,7 +18,9 @@
     "Algorithm",
     "Weighted",
     "Undirected",
-    "Directed"
+    "Directed",
+    "Logs",
+    "Logging"
   ],
   "author": "Juan Sebastián Bravo <js.bravo@uniandes.edu.co>",
   "license": "MIT",

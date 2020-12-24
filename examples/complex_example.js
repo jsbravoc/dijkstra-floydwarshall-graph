@@ -1,6 +1,3 @@
-
-//This example is the solution to a homework and, thus, the reason for creating this library :)
-
 let Graph = null;
 if (typeof window === "undefined") {
   Graph = require("../Graph/Graph.js");
@@ -14,7 +11,7 @@ const LOG_EVERYTHING = 3;
 const LOG_MIN = 1;
 
 const graph = new Graph({
-  name: "Graph Taller 3",
+  name: "Graph Example",
   loggingLevel: LOG_EVERYTHING,
   autoCreateNodes: true,
   ignoreErrors: true,

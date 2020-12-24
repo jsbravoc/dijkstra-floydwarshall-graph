@@ -13,7 +13,7 @@ if (typeof window === "undefined") {
   }
 }
 
-/** Class representing a Weighted (Un)directed Graph */
+/** Class representing a Weighted directed or undirected Graph */
 module.exports = class Graph {
   //Private attributes
   #tableLog = null;

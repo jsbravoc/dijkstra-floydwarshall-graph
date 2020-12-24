@@ -4,18 +4,19 @@ const graph = new Graph({
   autoCreateNodes: true,
   loggingLevel: 0,
   constantNodesCost: 100,
-  ignoreErrors: false
+  ignoreErrors: false,
 });
 
-//Say C is has a toll of 500.
+//Say C has a toll of 500.
 graph.addNode({ name: "C", cost: 500 });
 
 //Since autoCreateNodes is true, A,B,D nodes will be autoCreated with cost = constantNodesCost (100).
-graph.addRoute("A", "B", 2);
-graph.addRoute("A", "C", 1);
-graph.addRoute("B", "C", 2);
-graph.addRoute("C", "D", 1);
-graph.addRoute("B", "D", 200);
+graph
+  .addRoute("A", "B", 2)
+  .addRoute("A", "C", 1)
+  .addRoute("B", "C", 2)
+  .addRoute("C", "D", 1)
+  .addRoute("B", "D", 200);
 
 let dijkstra = graph.findPathDijkstra("A", "D"); // output: => { cost: 502, path: ['A', 'B', 'D']}
 console.log(dijkstra);
@@ -52,10 +53,9 @@ graph.addRoute("B", "D", 1);
 dijkstra = graph.findPathDijkstra("A", "D");
 console.log(dijkstra); // output: => { cost: 302, path: ['A', 'B', 'D']}
 
-graph.avoidRoute("A", "B")
+graph.avoidRoute("A", "B");
 dijkstra = graph.findPathDijkstra("A", "D");
 console.log(dijkstra); // output: => { cost:1301, path: ['A', 'H', 'D']}
-
 
 graph.addRoute("A", "D", 1000);
 graph.avoidNode("H");

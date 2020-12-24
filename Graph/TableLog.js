@@ -1,4 +1,4 @@
-/** Class representing a log of the Dijkstra (IIND3221 Format) */
+/** Class representing a log of the Dijkstra Algorithm */
 module.exports = class TableLog {
   /**
    * Create a log for an iteration.
