@@ -1,5 +1,5 @@
 {
-  "name": "dijkstra-floydwarshall-graph",
+  "name": "@jsbravoc/dijkstra-floydwarshall-graph",
   "publishConfig": {
     "registry": "https://npm.pkg.github.com/jsbravoc"
   },
