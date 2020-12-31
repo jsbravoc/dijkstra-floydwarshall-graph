@@ -224,7 +224,7 @@ module.exports = class Graph {
     autoCreateNodes = false,
     constantNodesCost = 0,
     costFormat = null,
-  }) {
+  } = {}) {
     const now = new Date();
     const date =
       now.getFullYear() + "-" + (now.getMonth() + 1) + "-" + now.getDate();

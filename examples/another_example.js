@@ -34,7 +34,7 @@ graph.editNode("C", "F", 100);
 dijkstra = graph.findPathDijkstra("A", "D");
 console.log(dijkstra); // output: => { cost: 302, path: ['A', 'F', 'D']}
 
-graph.editNode("F", "H", null);
+graph.editNode("F", "H", null); //Change node name F -> H
 
 dijkstra = graph.findPathDijkstra("A", "D");
 console.log(dijkstra); // output: => { cost: 302, path: ['A', 'H', 'D']}
@@ -61,5 +61,3 @@ graph.addRoute("A", "D", 1000);
 graph.avoidNode("H");
 dijkstra = graph.findPathDijkstra("A", "D");
 console.log(dijkstra); // output: => { cost:1200, path: ['A', 'D']}
-
-graph.addNode("A");
