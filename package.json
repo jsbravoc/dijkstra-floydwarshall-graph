@@ -3,7 +3,7 @@
   "publishConfig": {
     "registry": "https://npm.pkg.github.com/jsbravoc"
   },
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "Dijkstra & Floyd Warshall implementation for weighted directed and undirected graphs with iteration logging.",
   "main": "./Graph/Graph.js",
   "scripts": {
