@@ -500,21 +500,23 @@ describe("Algorithms", function () {
           should.Throw(() => graph.findPathDijkstra(null, "B"), Error);
         });
       });
+      
+       describe("Nonexistent nodes as parameters", function () {
+         it("should throw an error due to nonexistent nodes", function () {
+           const graph = new Graph({
+             ignoreErrors: false,
+             autoCreateNodes: true,
+           });
+           graph
+             .addRoute("A", "B", 100)
+             .addRoute("A", "C", 1)
+             .addRoute("B", "C", 1);
+           should.Throw(() => graph.findPathDijkstra("A", "D"), Error);
+           should.Throw(() => graph.findPathDijkstra("D", "A"), Error);
+         });
+       });
     });
-    describe("Nonexistent nodes as parameters", function () {
-      it("should throw an error due to nonexistent nodes", function () {
-        const graph = new Graph({
-          ignoreErrors: false,
-          autoCreateNodes: true,
-        });
-        graph
-          .addRoute("A", "B", 100)
-          .addRoute("A", "C", 1)
-          .addRoute("B", "C", 1);
-        should.Throw(() => graph.findPathDijkstra("A", "D"), Error);
-        should.Throw(() => graph.findPathDijkstra("D", "A"), Error);
-      });
-    });
+   
     describe("Floyd-Warshall Algorithm", function () {
       describe("Empty required parameters", function () {
         it("should throw an error due to empty parameters", function () {

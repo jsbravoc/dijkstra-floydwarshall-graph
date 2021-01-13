@@ -7,12 +7,11 @@ if (typeof window === "undefined") {
   }
 }
 
-const LOG_EVERYTHING = 3;
-const LOG_MIN = 1;
+const Constants = require("../Graph/Constants")
 
 const graph = new Graph({
   name: "Graph Example",
-  loggingLevel: LOG_EVERYTHING,
+  loggingLevel: Constants.LoggingLevels.ALL,
   autoCreateNodes: true,
   ignoreErrors: true,
   costFormat: {

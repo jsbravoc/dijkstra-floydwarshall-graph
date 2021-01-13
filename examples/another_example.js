@@ -1,8 +1,10 @@
 const Graph = require("../Graph/Graph");
 
+const Constants = require("../Graph/Constants");
+
 const graph = new Graph({
   autoCreateNodes: true,
-  loggingLevel: 0,
+  loggingLevel: Constants.LoggingLevels.NONE,
   constantNodesCost: 100,
   ignoreErrors: false,
 });

@@ -1,10 +1,8 @@
 const Graph = require("../Graph/Graph");
-
-const LOG_EVERYTHING = 3;
-
+const Constants = require("../Graph/Constants");
 const graph = new Graph({
   name: "Graph Example",
-  loggingLevel: LOG_EVERYTHING,
+  loggingLevel: Constants.LoggingLevels.ALL,
   autoCreateNodes: false,
 });
 

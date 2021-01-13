@@ -13,6 +13,7 @@ if (typeof window === "undefined") {
   }
 }
 
+
 /** Class representing a Weighted directed or undirected Graph */
 module.exports = class Graph {
   //Private attributes
@@ -238,12 +239,7 @@ module.exports = class Graph {
     this.graph = {};
     this.costsNodes = {};
     this.costFormat = costFormat;
-    this.loggingLevels = {
-      NONE: 0,
-      MIN: 1,
-      STEPS: 2,
-      ALL: 3,
-    };
+    this.loggingLevels = require("./Constants").LoggingLevels;
     if (typeof ignoreErrors === "boolean") this.ignoreErrors = ignoreErrors;
     else
       this.logProcess(
