@@ -3,9 +3,9 @@
   "publishConfig": {
     "registry": "https://npm.pkg.github.com/jsbravoc"
   },
-  "version": "1.0.4",
+  "version": "1.1.0",
   "description": "Dijkstra & Floyd Warshall implementation for weighted directed and undirected graphs with iteration logging.",
-  "main": "./Graph/Graph.js",
+  "main": "./Graph/index.js",
   "scripts": {
     "test": "mocha",
     "start": "node ./examples/complex_example.js"
@@ -23,7 +23,13 @@
     "Undirected",
     "Directed",
     "Logs",
-    "Logging"
+    "Logging",
+    "Shortest",
+    "Cheapest",
+    "Path",
+    "Route",
+    "Explanation",
+    "Tolls"
   ],
   "author": "Juan Sebastián Bravo <js.bravo@uniandes.edu.co>",
   "license": "MIT",

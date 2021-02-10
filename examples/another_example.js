@@ -1,6 +1,5 @@
-const Graph = require("../Graph/Graph");
+const { Graph, Constants } = require("../Graph");
 
-const Constants = require("../Graph/Constants");
 
 const graph = new Graph({
   autoCreateNodes: true,

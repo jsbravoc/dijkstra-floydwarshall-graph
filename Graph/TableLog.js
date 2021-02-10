@@ -1,5 +1,6 @@
 /** Class representing a log of the Dijkstra Algorithm */
-module.exports = class TableLog {
+module.exports = {
+  TableLog: class TableLog {
   /**
    * Create a log for an iteration.
    * @param {String} visitedNodes - The node marked as visited in the iteration.
@@ -28,4 +29,5 @@ module.exports = class TableLog {
   print() {
     console.table(this);
   }
+  },
 }

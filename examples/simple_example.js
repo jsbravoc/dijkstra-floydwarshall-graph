@@ -1,5 +1,4 @@
-const Graph = require("../Graph/Graph");
-const Constants = require("../Graph/Constants");
+const { Graph, Constants } = require("../Graph");
 const graph = new Graph({
   name: "Graph Example",
   loggingLevel: Constants.LoggingLevels.ALL,

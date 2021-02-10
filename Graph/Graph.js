@@ -4,15 +4,8 @@
  * @author Juan Sebastián Bravo <js.bravo@uniandes.edu.co>
  */
 
-let TableLog = null;
-if (typeof window === "undefined") {
-  TableLog = require("./TableLog.js");
-} else {
-  if (!TableLog) {
-    throw new Error("TableLog class isn't defined yet");
-  }
-}
 
+const { TableLog } = require("./TableLog")
 
 /** Class representing a Weighted directed or undirected Graph */
 module.exports = class Graph {

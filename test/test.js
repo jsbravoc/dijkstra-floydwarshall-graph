@@ -1,6 +1,6 @@
 const should = require("chai").should();
 const { expect } = require("chai");
-const Graph = require("../Graph/Graph");
+const { Graph } = require("../Graph");
 describe("Graph manipulation", function () {
   describe("Node manipulation", function () {
     describe("addNode()", function () {

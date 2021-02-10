@@ -1,13 +1,6 @@
-let Graph = null;
-if (typeof window === "undefined") {
-  Graph = require("../Graph/Graph.js");
-} else {
-  if (!Graph) {
-    throw new Error("Graph class isn't defined yet");
-  }
-}
 
-const Constants = require("../Graph/Constants")
+
+const { Graph, Constants }= require("../Graph")
 
 const graph = new Graph({
   name: "Graph Example",
