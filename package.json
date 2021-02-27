@@ -1,6 +1,6 @@
 {
   "name": "@jsbravoc/dijkstra-floydwarshall-graph",
-  "version": "1.1.1",
+  "version": "1.1.2",
   "description": "Dijkstra & Floyd Warshall implementation for weighted directed and undirected graphs with iteration logging.",
   "main": "./Graph/index.js",
   "scripts": {
@@ -11,7 +11,9 @@
     "type": "git",
     "url": "git+https://github.com/jsbravoc/dijkstra-floydwarshall-graph.git"
   },
-  "files": ["./Graph"],
+  "files": [
+    "./Graph"
+  ],
   "keywords": [
     "Dijkstra",
     "Floyd-Warshall",
