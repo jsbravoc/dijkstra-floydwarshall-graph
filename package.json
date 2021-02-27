@@ -12,7 +12,7 @@
     "url": "git+https://github.com/jsbravoc/dijkstra-floydwarshall-graph.git"
   },
   "files": [
-    "./Graph"
+    "Graph"
   ],
   "keywords": [
     "Dijkstra",
