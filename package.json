@@ -1,6 +1,6 @@
 {
   "name": "dijkstra-floydwarshall-graph",
-  "version": "1.1.2",
+  "version": "1.2.0",
   "description": "Dijkstra & Floyd Warshall implementation for weighted directed and undirected graphs with iteration logging.",
   "main": "./Graph/index.js",
   "scripts": {
